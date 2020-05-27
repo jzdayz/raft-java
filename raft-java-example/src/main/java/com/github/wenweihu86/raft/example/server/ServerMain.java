@@ -1,9 +1,9 @@
 package com.github.wenweihu86.raft.example.server;
 
 import com.baidu.brpc.server.RpcServer;
+import com.github.wenweihu86.raft.RaftNode;
 import com.github.wenweihu86.raft.RaftOptions;
 import com.github.wenweihu86.raft.example.server.service.ExampleService;
-import com.github.wenweihu86.raft.RaftNode;
 import com.github.wenweihu86.raft.example.server.service.impl.ExampleServiceImpl;
 import com.github.wenweihu86.raft.proto.RaftProto;
 import com.github.wenweihu86.raft.service.RaftClientService;
@@ -18,7 +18,35 @@ import java.util.List;
  * Created by wenweihu86 on 2017/5/9.
  */
 public class ServerMain {
+
+    private static String[] getArgs(int node){
+        if (node == 1){
+            return new String[]{
+                    "/Users/jzdayz/Downloads/raft/node1",
+                    "127.0.0.1:8001:1,127.0.0.1:8002:2,127.0.0.1:8003:3",
+                    "127.0.0.1:8001:1"
+            };
+        }
+        if (node == 2){
+            return new String[]{
+                    "/Users/jzdayz/Downloads/raft/node2",
+                    "127.0.0.1:8001:1,127.0.0.1:2:2,127.0.0.1:8003:3",
+                    "127.0.0.1:8002:2"
+            };
+        }
+        if (node == 3){
+            return new String[]{
+                    "/Users/jzdayz/Downloads/raft/node3",
+                    "127.0.0.1:8001:1,127.0.0.1:8002:2,127.0.0.1:8003:3",
+                    "127.0.0.1:8003:3"
+            };
+        }
+        throw new RuntimeException();
+    }
+
     public static void main(String[] args) {
+        System.setProperty("log4j2.debug","true");
+        args = getArgs(3);
         if (args.length != 3) {
             System.out.printf("Usage: ./run_server.sh DATA_PATH CLUSTER CURRENT_NODE\n");
             System.exit(-1);

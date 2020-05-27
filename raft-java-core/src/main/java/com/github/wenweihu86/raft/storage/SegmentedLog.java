@@ -1,16 +1,15 @@
 package com.github.wenweihu86.raft.storage;
 
-import com.github.wenweihu86.raft.RaftOptions;
-import com.github.wenweihu86.raft.util.RaftFileUtils;
 import com.github.wenweihu86.raft.proto.RaftProto;
+import com.github.wenweihu86.raft.util.RaftFileUtils;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.RandomAccessFile;
 import java.nio.channels.FileChannel;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeMap;
 
@@ -89,7 +88,7 @@ public class SegmentedLog {
         Segment lastSegment = startLogIndexSegmentMap.lastEntry().getValue();
         return lastSegment.getEndIndex();
     }
-
+    // 将数据写入到文件中
     public long append(List<RaftProto.LogEntry> entries) {
         long newLastLogIndex = this.getLastLogIndex();
         for (RaftProto.LogEntry entry : entries) {
@@ -202,17 +201,21 @@ public class SegmentedLog {
         }
         LOG.info("Truncating log from old end index {} to new end index {}",
                 getLastLogIndex(), newEndIndex);
+        // 一直去拿到segment，截断到指定的 newEndIndex
         while (!startLogIndexSegmentMap.isEmpty()) {
             Segment segment = startLogIndexSegmentMap.lastEntry().getValue();
             try {
+                // 截断的index与最后的index一致，忽略即可
                 if (newEndIndex == segment.getEndIndex()) {
                     break;
                 } else if (newEndIndex < segment.getStartIndex()) {
+                    // 这里说明这个segment都是需要废弃的，因为有效的index，在之前的segment
                     totalSize -= segment.getFileSize();
-                    // delete file
+                    // delete file  删除文件
                     segment.getRandomAccessFile().close();
                     String fullFileName = logDataDir + File.separator + segment.getFileName();
                     FileUtils.forceDelete(new File(fullFileName));
+                    // 删除之
                     startLogIndexSegmentMap.remove(segment.getStartIndex());
                 } else if (newEndIndex < segment.getEndIndex()) {
                     int i = (int) (newEndIndex + 1 - segment.getStartIndex());

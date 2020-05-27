@@ -14,7 +14,8 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by wenweihu86 on 2017/5/2.
@@ -117,6 +118,7 @@ public class RaftConsensusServiceImpl implements RaftConsensusService {
                         raftNode.getLeaderId(),
                         PRINTER.printToString(raftNode.getConfiguration()));
             }
+            // 不是leader的请求，失败
             if (raftNode.getLeaderId() != request.getServerId()) {
                 LOG.warn("Another peer={} declares that it is the leader " +
                                 "at term={} which was occupied by leader={}",
@@ -126,13 +128,14 @@ public class RaftConsensusServiceImpl implements RaftConsensusService {
                 responseBuilder.setTerm(request.getTerm() + 1);
                 return responseBuilder.build();
             }
-
+            // 请求的pre日志索引大于本机的日志索引(说明落后太多了)
             if (request.getPrevLogIndex() > raftNode.getRaftLog().getLastLogIndex()) {
                 LOG.info("Rejecting AppendEntries RPC would leave gap, " +
                         "request prevLogIndex={}, my lastLogIndex={}",
                         request.getPrevLogIndex(), raftNode.getRaftLog().getLastLogIndex());
                 return responseBuilder.build();
             }
+            // 请求的pre数据任期，和本机不一致，拒绝追加
             if (request.getPrevLogIndex() >= raftNode.getRaftLog().getFirstLogIndex()
                     && raftNode.getRaftLog().getEntryTerm(request.getPrevLogIndex())
                     != request.getPrevLogTerm()) {
@@ -144,7 +147,7 @@ public class RaftConsensusServiceImpl implements RaftConsensusService {
                 responseBuilder.setLastLogIndex(request.getPrevLogIndex() - 1);
                 return responseBuilder.build();
             }
-
+            // 心跳
             if (request.getEntriesCount() == 0) {
                 LOG.debug("heartbeat request from peer={} at term={}, my term={}",
                         request.getServerId(), request.getTerm(), raftNode.getCurrentTerm());
@@ -160,13 +163,16 @@ public class RaftConsensusServiceImpl implements RaftConsensusService {
             long index = request.getPrevLogIndex();
             for (RaftProto.LogEntry entry : request.getEntriesList()) {
                 index++;
+                // index对应的数据已经持久化过了
                 if (index < raftNode.getRaftLog().getFirstLogIndex()) {
                     continue;
                 }
+                // 已经添加过的index，校验一下任期
                 if (raftNode.getRaftLog().getLastLogIndex() >= index) {
                     if (raftNode.getRaftLog().getEntryTerm(index) == entry.getTerm()) {
                         continue;
                     }
+                    // 这里说明对应index的数据，任期与leader不一致
                     // truncate segment log from index
                     long lastIndexKept = index - 1;
                     raftNode.getRaftLog().truncateSuffix(lastIndexKept);
@@ -308,6 +314,9 @@ public class RaftConsensusServiceImpl implements RaftConsensusService {
         return responseBuilder.build();
     }
 
+    /**
+     *  根据请求的preIndex应用数据到状态机
+     */
     // in lock, for follower
     private void advanceCommitIndex(RaftProto.AppendEntriesRequest request) {
         long newCommitIndex = Math.min(request.getCommitIndex(),

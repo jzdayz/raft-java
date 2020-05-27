@@ -10,7 +10,16 @@ import com.googlecode.protobuf.format.JsonFormat;
  * Created by wenweihu86 on 2017/5/14.
  */
 public class ClientMain {
+
+    private static String[] getArgs(){
+        return new String[]{
+                "list://127.0.0.1:8001,127.0.0.1:8002,127.0.0.1:8003",
+                "hell2o","11122222"
+        };
+    }
+
     public static void main(String[] args) {
+        args = getArgs();
         if (args.length < 2) {
             System.out.printf("Usage: ./run_client.sh CLUSTER KEY [VALUE]\n");
             System.exit(-1);
