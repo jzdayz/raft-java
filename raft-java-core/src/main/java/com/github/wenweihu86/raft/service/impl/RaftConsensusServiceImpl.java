@@ -111,6 +111,7 @@ public class RaftConsensusServiceImpl implements RaftConsensusService {
             if (request.getTerm() < raftNode.getCurrentTerm()) {
                 return responseBuilder.build();
             }
+            // 压制选举，改变状态
             raftNode.stepDown(request.getTerm());
             if (raftNode.getLeaderId() == 0) {
                 raftNode.setLeaderId(request.getServerId());
@@ -179,6 +180,7 @@ public class RaftConsensusServiceImpl implements RaftConsensusService {
                 }
                 entries.add(entry);
             }
+            // 持久化数据至文件
             raftNode.getRaftLog().append(entries);
 //            raftNode.getRaftLog().updateMetaData(raftNode.getCurrentTerm(),
 //                    null, raftNode.getRaftLog().getFirstLogIndex());
@@ -204,6 +206,7 @@ public class RaftConsensusServiceImpl implements RaftConsensusService {
         raftNode.getLock().lock();
         try {
             responseBuilder.setTerm(raftNode.getCurrentTerm());
+            // 请求的人气小于本机任期，忽略请求
             if (request.getTerm() < raftNode.getCurrentTerm()) {
                 return responseBuilder.build();
             }
@@ -217,7 +220,7 @@ public class RaftConsensusServiceImpl implements RaftConsensusService {
         } finally {
             raftNode.getLock().unlock();
         }
-
+        // 已经在安装快照了
         if (raftNode.getSnapshot().getIsTakeSnapshot().get()) {
             LOG.warn("alreay in take snapshot, do not handle install snapshot request now");
             return responseBuilder.build();

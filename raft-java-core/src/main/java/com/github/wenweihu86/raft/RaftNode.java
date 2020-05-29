@@ -296,6 +296,13 @@ public class RaftNode {
         }
     }
 
+    /**
+     *  1.判断任期
+     *  2.改变状态为追随者
+     *  3.取消心跳任务
+     *  4.重置选举器的状态
+     * @param newTerm
+     */
     // in lock
     public void stepDown(long newTerm) {
         if (currentTerm > newTerm) {
@@ -431,7 +438,7 @@ public class RaftNode {
     }
 
     /**
-     * 选举定时器
+     * 停止并且重新开始选举定时器
      */
     private void resetElectionTimer() {
         if (electionScheduledFuture != null && !electionScheduledFuture.isDone()) {
