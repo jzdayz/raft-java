@@ -83,6 +83,7 @@ public class RaftClientServiceImpl implements RaftClientService {
     public RaftProto.AddPeersResponse addPeers(RaftProto.AddPeersRequest request) {
         RaftProto.AddPeersResponse.Builder responseBuilder = RaftProto.AddPeersResponse.newBuilder();
         responseBuilder.setResCode(RaftProto.ResCode.RES_CODE_FAIL);
+        // TODO 2的倍数？一般不是奇数台吗？
         if (request.getServersCount() == 0
                 || request.getServersCount() % 2 != 0) {
             LOG.warn("added server's size can only multiple of 2");
