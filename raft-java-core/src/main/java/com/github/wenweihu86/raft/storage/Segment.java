@@ -19,7 +19,7 @@ public class Segment {
             this.entry = entry;
         }
     }
-
+    // 可写
     private boolean canWrite;
     private long startIndex;
     private long endIndex;
@@ -28,6 +28,9 @@ public class Segment {
     private RandomAccessFile randomAccessFile;
     private List<Record> entries = new ArrayList<>();
 
+    /**
+     *  获取日志信息
+     */
     public RaftProto.LogEntry getEntry(long index) {
         if (startIndex == 0 || endIndex == 0) {
             return null;

@@ -19,24 +19,26 @@ import java.util.List;
  */
 public class ServerMain {
 
+    private final static String DIR = "/Users/huqingfeng/Downloads/raft/";
+
     private static String[] getArgs(int node){
         if (node == 1){
             return new String[]{
-                    "/Users/jzdayz/Downloads/raft/node1",
+                    DIR + "node1",
                     "127.0.0.1:8001:1,127.0.0.1:8002:2,127.0.0.1:8003:3",
                     "127.0.0.1:8001:1"
             };
         }
         if (node == 2){
             return new String[]{
-                    "/Users/jzdayz/Downloads/raft/node2",
+                    DIR + "node2",
                     "127.0.0.1:8001:1,127.0.0.1:2:2,127.0.0.1:8003:3",
                     "127.0.0.1:8002:2"
             };
         }
         if (node == 3){
             return new String[]{
-                    "/Users/jzdayz/Downloads/raft/node3",
+                    DIR + "node3",
                     "127.0.0.1:8001:1,127.0.0.1:8002:2,127.0.0.1:8003:3",
                     "127.0.0.1:8003:3"
             };
