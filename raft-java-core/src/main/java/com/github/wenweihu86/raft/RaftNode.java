@@ -337,6 +337,7 @@ public class RaftNode {
             RaftProto.Configuration.Builder localConfiguration = RaftProto.Configuration.newBuilder();
             lock.lock();
             try {
+                // 没有达到 快照阈值
                 if (raftLog.getTotalSize() < raftOptions.getSnapshotMinLogSize()) {
                     return;
                 }
